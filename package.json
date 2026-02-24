@@ -32,7 +32,17 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "commander": "^14.0.3",
     "octokit": "^4.0.0",
-    "yaml": "^2.3.0"
+    "yaml": "^2.3.0",
+    "@git-fabric/git": "github:git-fabric/git",
+    "@git-fabric/cve": "github:git-fabric/cve",
+    "@git-fabric/k8s": "github:git-fabric/k8s",
+    "@git-fabric/sandfly": "github:git-fabric/sandfly",
+    "@git-fabric/cloudflare": "github:git-fabric/cloudflare",
+    "@git-fabric/proxmox": "github:git-fabric/proxmox",
+    "@git-fabric/tailscale": "github:git-fabric/tailscale",
+    "@git-fabric/unifi": "github:git-fabric/unifi",
+    "@git-fabric/aiana": "github:git-fabric/aiana",
+    "@git-fabric/chat": "github:git-fabric/chat"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

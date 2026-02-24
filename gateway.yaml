@@ -1,0 +1,99 @@
+# gateway.yaml — git-fabric app registry
+#
+# Each app is loaded via dynamic import at gateway startup.
+# Set `enabled: false` to disable an app without removing it.
+#
+# Environment variables listed under `env` are injected into
+# process.env before the app's createApp() is called. Use this
+# to pass app-specific overrides; most vars are read from the
+# host environment (secrets, tokens, URLs).
+#
+# Required env vars per app are documented inline.
+
+apps:
+
+  # ── Memory & Conversation ────────────────────────────────────────────────
+
+  - name: "@git-fabric/aiana"
+    enabled: true
+    # Required env vars:
+    #   QDRANT_URL       — Qdrant Cloud cluster URL
+    #   QDRANT_API_KEY   — Qdrant Cloud API key
+    #   OPENAI_API_KEY   — text-embedding-3-small embeddings
+    # Collection: aiana_fabric__memories__v1 (created on first run)
+
+  - name: "@git-fabric/chat"
+    enabled: true
+    # Required env vars:
+    #   ANTHROPIC_API_KEY  — Claude completions
+    #   OPENAI_API_KEY     — text-embedding-3-small embeddings
+    #   QDRANT_URL         — Qdrant Cloud cluster URL
+    #   QDRANT_API_KEY     — Qdrant Cloud API key
+    #   GITHUB_TOKEN       — read/write ry-ops/git-steer-state
+    # Optional:
+    #   GITHUB_STATE_REPO  — defaults to ry-ops/git-steer-state
+    # Collection: chat_fabric__messages__v1 (created on first run)
+
+  # ── Source Control ───────────────────────────────────────────────────────
+
+  - name: "@git-fabric/git"
+    enabled: true
+    # Required env vars:
+    #   GITHUB_TOKEN   — GitHub personal access token
+    # Optional:
+    #   GITHUB_ORG     — default org for repo operations
+
+  - name: "@git-fabric/cve"
+    enabled: true
+    # Required env vars:
+    #   GITHUB_TOKEN   — GitHub personal access token (repo + security_events scopes)
+    # Optional:
+    #   GITHUB_ORG     — default org for CVE sweeps
+    #   STATE_REPO     — defaults to ry-ops/git-steer-state
+
+  # ── Infrastructure ───────────────────────────────────────────────────────
+
+  - name: "@git-fabric/k8s"
+    enabled: true
+    # Required env vars (one of):
+    #   KUBECONFIG                    — path to kubeconfig file
+    #   In-cluster: auto-detected via service account when running in a pod
+
+  - name: "@git-fabric/proxmox"
+    enabled: true
+    # Required env vars:
+    #   PROXMOX_HOST         — Proxmox server hostname or IP
+    #   PROXMOX_USER         — username (e.g. root@pam)
+    #   PROXMOX_TOKEN_NAME   — API token name
+    #   PROXMOX_TOKEN_VALUE  — API token value
+    # Optional:
+    #   PROXMOX_PORT         — defaults to 8006
+    #   PROXMOX_VERIFY_SSL   — defaults to false
+
+  # ── Network & Edge ───────────────────────────────────────────────────────
+
+  - name: "@git-fabric/cloudflare"
+    enabled: true
+    # Required env vars:
+    #   CLOUDFLARE_API_TOKEN  — Cloudflare API token
+
+  - name: "@git-fabric/tailscale"
+    enabled: true
+    # Required env vars:
+    #   TAILSCALE_API_KEY  — Tailscale API key
+    # Optional:
+    #   TAILSCALE_TAILNET  — tailnet slug, defaults to "-" (authenticated user)
+
+  - name: "@git-fabric/unifi"
+    enabled: true
+    # Required env vars:
+    #   UNIFI_API_KEY  — UI.com Cloud API key (X-API-KEY)
+
+  # ── Security ─────────────────────────────────────────────────────────────
+
+  - name: "@git-fabric/sandfly"
+    enabled: true
+    # Required env vars:
+    #   SANDFLY_URL       — Sandfly server URL (e.g. https://sandfly.internal)
+    #   SANDFLY_USER      — username
+    #   SANDFLY_PASSWORD  — password
