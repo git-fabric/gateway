@@ -6,9 +6,10 @@
  * get access to every fabric app's tools.
  *
  * Built-in tools:
- *   fabric_health  — health check across all registered apps
- *   fabric_apps    — list registered apps and their tools
- *   fabric_route   — explicitly route a call to a specific app
+ *   fabric_health   — health check across all registered apps
+ *   fabric_apps     — list registered apps and their tools
+ *   fabric_route    — explicitly route a call to a specific app
+ *   fabric_suggest  — MoE router: suggest which app handles a query
  *
  * All registered app tools are also exposed directly by name.
  */
@@ -22,6 +23,7 @@ import {
 
 import type { Router } from "../router.js";
 import type { AppRegistry } from "../types.js";
+import { routeQuery } from "../moe.js";
 
 // ── Built-in gateway tools ──────────────────────────────────────────────────
 
@@ -50,6 +52,18 @@ const GATEWAY_TOOLS = [
         args: { type: "object", description: "Arguments to pass to the tool" },
       },
       required: ["app", "tool"],
+    },
+  },
+  {
+    name: "fabric_suggest",
+    description:
+      "MoE router: given a natural language query, suggests which fabric app(s) can handle it and what tool prefix to use. Returns confidence scores and matched keywords. Does not execute anything.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Natural language description of what you want to do." },
+      },
+      required: ["query"],
     },
   },
 ];
@@ -100,6 +114,18 @@ export async function startGatewayServer(
           content: [{
             type: "text",
             text: JSON.stringify({ apps, totalTools: tools.length }, null, 2),
+          }],
+        };
+      }
+
+      case "fabric_suggest": {
+        const query = args?.query as string;
+        if (!query) throw new Error("query is required");
+        const result = routeQuery(query);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(result, null, 2),
           }],
         };
       }
