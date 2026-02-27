@@ -14,8 +14,10 @@
  * All registered app tools are also exposed directly by name.
  */
 
+import { createServer } from "node:http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -169,6 +171,38 @@ export async function startGatewayServer(
     };
   });
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const httpPort = process.env.MCP_HTTP_PORT ? Number(process.env.MCP_HTTP_PORT) : null;
+
+  if (httpPort) {
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    await server.connect(transport);
+
+    const readBody = (req: import("node:http").IncomingMessage): Promise<unknown> =>
+      new Promise((resolve, reject) => {
+        const chunks: Buffer[] = [];
+        req.on("data", (c: Buffer) => chunks.push(c));
+        req.on("end", () => {
+          try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
+          catch { resolve(undefined); }
+        });
+        req.on("error", reject);
+      });
+
+    const httpServer = createServer(async (req, res) => {
+      if (req.url === "/healthz") { res.writeHead(200).end("ok"); return; }
+      if (req.url === "/mcp" || req.url === "/") {
+        const body = await readBody(req);
+        await transport.handleRequest(req, res, body);
+        return;
+      }
+      res.writeHead(404).end("not found");
+    });
+
+    httpServer.listen(httpPort, () => {
+      console.log(`@git-fabric/gateway MCP server listening on :${httpPort}`);
+    });
+  } else {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  }
 }
