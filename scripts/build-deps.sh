@@ -3,6 +3,8 @@
 # GitHub source (they don't include pre-built dist/).
 set -e
 
+ROOT=$(pwd)
+
 FABRIC_PKGS="
   @git-fabric/k8s
   @git-fabric/chat
@@ -17,7 +19,7 @@ FABRIC_PKGS="
 "
 
 for pkg in $FABRIC_PKGS; do
-  dir="node_modules/$pkg"
+  dir="$ROOT/node_modules/$pkg"
   if [ ! -d "$dir" ]; then
     echo "  skip $pkg (not installed)"
     continue
@@ -26,16 +28,19 @@ for pkg in $FABRIC_PKGS; do
     echo "  skip $pkg (dist/ already present)"
     continue
   fi
+  if [ ! -f "$dir/tsconfig.json" ]; then
+    echo "  skip $pkg (no tsconfig.json)"
+    continue
+  fi
   echo "  building $pkg..."
-  cd "$dir"
-  # Install dev deps for tsc, then build
-  npm install --include=dev --ignore-scripts 2>/dev/null || true
-  node_modules/.bin/tsc --project tsconfig.json 2>/dev/null || npx tsc --project tsconfig.json 2>/dev/null || true
-  cd - > /dev/null
+  # Install dev deps for TypeScript compiler
+  npm install --prefix "$dir" --include=dev --ignore-scripts 2>/dev/null || true
+  # Run tsc from the package directory
+  (cd "$dir" && node_modules/.bin/tsc --project tsconfig.json 2>/dev/null) || true
   if [ -d "$dir/dist" ]; then
-    echo "  ✓ $pkg built"
+    echo "  ✓ $pkg"
   else
-    echo "  ✗ $pkg build failed (will be skipped at runtime)"
+    echo "  ✗ $pkg build failed"
   fi
 done
 
