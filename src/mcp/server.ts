@@ -189,7 +189,7 @@ export async function startGatewayServer(
       });
 
     const httpServer = createServer(async (req, res) => {
-      if (req.url === "/healthz") { res.writeHead(200).end("ok"); return; }
+      if (req.url === "/healthz" || req.url === "/health") { res.writeHead(200).end("ok"); return; }
       if (req.url === "/mcp" || req.url === "/") {
         const body = await readBody(req);
         await transport.handleRequest(req, res, body);

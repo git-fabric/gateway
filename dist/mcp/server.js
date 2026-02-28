@@ -6,15 +6,19 @@
  * get access to every fabric app's tools.
  *
  * Built-in tools:
- *   fabric_health  — health check across all registered apps
- *   fabric_apps    — list registered apps and their tools
- *   fabric_route   — explicitly route a call to a specific app
+ *   fabric_health   — health check across all registered apps
+ *   fabric_apps     — list registered apps and their tools
+ *   fabric_route    — explicitly route a call to a specific app
+ *   fabric_suggest  — MoE router: suggest which app handles a query
  *
  * All registered app tools are also exposed directly by name.
  */
+import { createServer } from "node:http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { routeQuery } from "../moe.js";
 // ── Built-in gateway tools ──────────────────────────────────────────────────
 const GATEWAY_TOOLS = [
     {
@@ -38,6 +42,17 @@ const GATEWAY_TOOLS = [
                 args: { type: "object", description: "Arguments to pass to the tool" },
             },
             required: ["app", "tool"],
+        },
+    },
+    {
+        name: "fabric_suggest",
+        description: "MoE router: given a natural language query, suggests which fabric app(s) can handle it and what tool prefix to use. Returns confidence scores and matched keywords. Does not execute anything.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                query: { type: "string", description: "Natural language description of what you want to do." },
+            },
+            required: ["query"],
         },
     },
 ];
@@ -73,6 +88,18 @@ export async function startGatewayServer(registry, router) {
                     content: [{
                             type: "text",
                             text: JSON.stringify({ apps, totalTools: tools.length }, null, 2),
+                        }],
+                };
+            }
+            case "fabric_suggest": {
+                const query = args?.query;
+                if (!query)
+                    throw new Error("query is required");
+                const result = routeQuery(query);
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify(result, null, 2),
                         }],
                 };
             }
@@ -112,7 +139,42 @@ export async function startGatewayServer(registry, router) {
                 }],
         };
     });
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
+    const httpPort = process.env.MCP_HTTP_PORT ? Number(process.env.MCP_HTTP_PORT) : null;
+    if (httpPort) {
+        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+        await server.connect(transport);
+        const readBody = (req) => new Promise((resolve, reject) => {
+            const chunks = [];
+            req.on("data", (c) => chunks.push(c));
+            req.on("end", () => {
+                try {
+                    resolve(JSON.parse(Buffer.concat(chunks).toString()));
+                }
+                catch {
+                    resolve(undefined);
+                }
+            });
+            req.on("error", reject);
+        });
+        const httpServer = createServer(async (req, res) => {
+            if (req.url === "/healthz" || req.url === "/health") {
+                res.writeHead(200).end("ok");
+                return;
+            }
+            if (req.url === "/mcp" || req.url === "/") {
+                const body = await readBody(req);
+                await transport.handleRequest(req, res, body);
+                return;
+            }
+            res.writeHead(404).end("not found");
+        });
+        httpServer.listen(httpPort, () => {
+            console.log(`@git-fabric/gateway MCP server listening on :${httpPort}`);
+        });
+    }
+    else {
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+    }
 }
 //# sourceMappingURL=server.js.map

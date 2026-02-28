@@ -6,9 +6,10 @@
  * get access to every fabric app's tools.
  *
  * Built-in tools:
- *   fabric_health  — health check across all registered apps
- *   fabric_apps    — list registered apps and their tools
- *   fabric_route   — explicitly route a call to a specific app
+ *   fabric_health   — health check across all registered apps
+ *   fabric_apps     — list registered apps and their tools
+ *   fabric_route    — explicitly route a call to a specific app
+ *   fabric_suggest  — MoE router: suggest which app handles a query
  *
  * All registered app tools are also exposed directly by name.
  */

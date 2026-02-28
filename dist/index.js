@@ -6,4 +6,5 @@
 export * from "./types.js";
 export { createRegistry } from "./registry.js";
 export { createRouter } from "./router.js";
+export { routeQuery } from "./moe.js";
 //# sourceMappingURL=index.js.map
