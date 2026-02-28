@@ -177,22 +177,11 @@ export async function startGatewayServer(
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     await server.connect(transport);
 
-    const readBody = (req: import("node:http").IncomingMessage): Promise<unknown> =>
-      new Promise((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        req.on("data", (c: Buffer) => chunks.push(c));
-        req.on("end", () => {
-          try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-          catch { resolve(undefined); }
-        });
-        req.on("error", reject);
-      });
-
     const httpServer = createServer(async (req, res) => {
       if (req.url === "/healthz" || req.url === "/health") { res.writeHead(200).end("ok"); return; }
       if (req.url === "/mcp" || req.url === "/") {
-        const body = await readBody(req);
-        await transport.handleRequest(req, res, body);
+        // SDK 1.9+ uses Hono internally and parses the body itself — pass undefined
+        await transport.handleRequest(req, res, undefined);
         return;
       }
       res.writeHead(404).end("not found");
