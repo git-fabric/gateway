@@ -57,7 +57,10 @@ const GATEWAY_TOOLS = [
     },
 ];
 // ── Server ──────────────────────────────────────────────────────────────────
-export async function startGatewayServer(registry, router) {
+// ── Build a fresh MCP server bound to registry+router ────────────────────────
+// SDK 1.9+ StreamableHTTPServerTransport is single-use per request (stateless mode),
+// so we create a new Server+Transport pair for each incoming HTTP request.
+function buildMcpServer(registry, router) {
     const server = new Server({ name: "@git-fabric/gateway", version: "0.1.0" }, { capabilities: { tools: {} } });
     server.setRequestHandler(ListToolsRequestSchema, async () => {
         // Combine gateway tools + all registered app tools
@@ -139,17 +142,22 @@ export async function startGatewayServer(registry, router) {
                 }],
         };
     });
+    return server;
+}
+// ── startGatewayServer ────────────────────────────────────────────────────────
+export async function startGatewayServer(registry, router) {
     const httpPort = process.env.MCP_HTTP_PORT ? Number(process.env.MCP_HTTP_PORT) : null;
     if (httpPort) {
-        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-        await server.connect(transport);
         const httpServer = createServer(async (req, res) => {
             if (req.url === "/healthz" || req.url === "/health") {
                 res.writeHead(200).end("ok");
                 return;
             }
             if (req.url === "/mcp" || req.url === "/") {
-                // SDK 1.9+ uses Hono internally and parses the body itself — pass undefined
+                // New transport+server per request — SDK 1.26 stateless mode is single-use
+                const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+                const server = buildMcpServer(registry, router);
+                await server.connect(transport);
                 await transport.handleRequest(req, res, undefined);
                 return;
             }
@@ -161,6 +169,7 @@ export async function startGatewayServer(registry, router) {
     }
     else {
         const transport = new StdioServerTransport();
+        const server = buildMcpServer(registry, router);
         await server.connect(transport);
     }
 }
