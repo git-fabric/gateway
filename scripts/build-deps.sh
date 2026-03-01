@@ -24,10 +24,8 @@ for pkg in $FABRIC_PKGS; do
     echo "  skip $pkg (not installed)"
     continue
   fi
-  if [ -d "$dir/dist" ]; then
-    echo "  skip $pkg (dist/ already present)"
-    continue
-  fi
+  # Note: do NOT skip if dist/ is present — the lock file pins a specific commit
+  # and layer caching can leave a stale dist/ from a prior version.
   if [ ! -f "$dir/tsconfig.json" ]; then
     echo "  skip $pkg (no tsconfig.json)"
     continue
