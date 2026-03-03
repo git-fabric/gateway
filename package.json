@@ -41,6 +41,7 @@
     "@git-fabric/unifi": "github:git-fabric/unifi#b61f557",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "commander": "^14.0.3",
+    "git-steer": "github:ry-ops/git-steer#5172d7d",
     "octokit": "^4.0.0",
     "yaml": "^2.3.0"
   },

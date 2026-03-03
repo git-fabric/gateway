@@ -89,6 +89,13 @@ apps:
     # Required env vars:
     #   UNIFI_API_KEY  — UI.com Cloud API key (X-API-KEY)
 
+  # ── GitHub Automation ────────────────────────────────────────────────────
+
+  - name: "git-steer/fabric"
+    enabled: true
+    # Required env vars:
+    #   GITHUB_TOKEN  — GitHub PAT (repo, security_events, actions scopes)
+
   # ── Security ─────────────────────────────────────────────────────────────
 
   - name: "@git-fabric/sandfly"
