@@ -40,7 +40,7 @@
     "@git-fabric/cloudflare": "github:git-fabric/cloudflare",
     "@git-fabric/proxmox": "github:git-fabric/proxmox",
     "@git-fabric/tailscale": "github:git-fabric/tailscale",
-    "@git-fabric/unifi": "github:git-fabric/unifi",
+    "@git-fabric/unifi": "github:git-fabric/unifi#0875f30",
     "@git-fabric/aiana": "github:git-fabric/aiana",
     "@git-fabric/chat": "github:git-fabric/chat"
   },
