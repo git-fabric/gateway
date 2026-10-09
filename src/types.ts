@@ -19,7 +19,18 @@ export interface FabricTool {
   name: string;                  // e.g. "cve_scan"
   description: string;
   inputSchema: Record<string, unknown>;
+  annotations?: ToolAnnotations;
   execute: (args: Record<string, unknown>) => Promise<unknown>;
+}
+
+// MCP tool annotation hints, passed through to tools/list unchanged.
+// Consumers treat a tool without readOnlyHint/destructiveHint as one that writes.
+export interface ToolAnnotations {
+  title?: string;
+  readOnlyHint?: boolean;        // does not modify its environment
+  destructiveHint?: boolean;     // may delete or overwrite (only meaningful when not read-only)
+  idempotentHint?: boolean;      // repeat calls with the same args have no extra effect
+  openWorldHint?: boolean;       // reaches systems outside the fabric
 }
 
 export interface HealthStatus {
