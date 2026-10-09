@@ -15,7 +15,15 @@ export interface FabricTool {
     name: string;
     description: string;
     inputSchema: Record<string, unknown>;
+    annotations?: ToolAnnotations;
     execute: (args: Record<string, unknown>) => Promise<unknown>;
+}
+export interface ToolAnnotations {
+    title?: string;
+    readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
 }
 export interface HealthStatus {
     app: string;

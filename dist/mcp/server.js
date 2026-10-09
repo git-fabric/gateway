@@ -24,11 +24,13 @@ const GATEWAY_TOOLS = [
     {
         name: "fabric_health",
         description: "Health check across all registered fabric apps. Returns status, latency, and details for each app.",
+        annotations: { readOnlyHint: true },
         inputSchema: { type: "object", properties: {} },
     },
     {
         name: "fabric_apps",
         description: "List all registered fabric apps and their tools.",
+        annotations: { readOnlyHint: true },
         inputSchema: { type: "object", properties: {} },
     },
     {
@@ -47,6 +49,7 @@ const GATEWAY_TOOLS = [
     {
         name: "fabric_suggest",
         description: "MoE router: given a natural language query, suggests which fabric app(s) can handle it and what tool prefix to use. Returns confidence scores and matched keywords. Does not execute anything.",
+        annotations: { readOnlyHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -68,6 +71,7 @@ function buildMcpServer(registry, router) {
             name: tool.name,
             description: `[${app.name}] ${tool.description}`,
             inputSchema: tool.inputSchema,
+            ...(tool.annotations && { annotations: tool.annotations }),
         })));
         return { tools: [...GATEWAY_TOOLS, ...appTools] };
     });
